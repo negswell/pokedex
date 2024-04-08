@@ -1,95 +1,108 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useGetInfinitePokemons } from "@/hooks/api/pokemon";
+import Header from "@/organisms/header";
+import {
+  Text,
+  Flex,
+  Box,
+  SimpleGrid,
+  Loader,
+  Affix,
+  Button,
+  Transition,
+} from "@mantine/core";
+import PokeCard from "./_components/PokeCard";
+import { useWindowScroll, useInViewport } from "@mantine/hooks";
+import { useEffect } from "react";
 
 export default function Home() {
+  const [scroll, scrollTo] = useWindowScroll();
+  const { ref, inViewport } = useInViewport();
+  const { data, size, setSize, isLoading } = useGetInfinitePokemons({});
+  const total = data ? data[0]?.count : 0;
+  const limit = 15;
+  const content = limit * size <= total;
+
+  useEffect(() => {
+    if (inViewport && content) {
+      setSize(size + 1);
+    }
+  }, [inViewport]);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main>
+      <Header />
+      <section>
+        <Box px={"xl"} pt={"xl"}>
+          {!isLoading && (
+            <Text size="md" fw={"700"}>
+              Total Pokemons : {total}
+            </Text>
+          )}
+        </Box>
+        {isLoading ? (
+          <Flex justify={"center"}>
+            <Loader color="red" size="xl" type="bars" />
+          </Flex>
+        ) : (
+          <SimpleGrid
+            cols={{ base: 1, sm: 2, md: 3, lg: 4, xl: 5 }}
+            p={"xl"}
+            spacing={{ base: "sm", sm: "lg", xl: "xl" }}
+            verticalSpacing={"xl"}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+            {data?.map((page) =>
+              page.results.map((item) => (
+                <PokeCard key={item.name} pokeData={item} />
+              ))
+            )}
+          </SimpleGrid>
+        )}
+        {
+          <Flex justify={"center"} p="xl" ref={ref}>
+            {content && (
+              <Button
+                color="black"
+                size="md"
+                radius="md"
+                onClick={() => setSize(size + 1)}
+              >
+                Load More
+              </Button>
+            )}
+          </Flex>
+        }
+      </section>
+      <Affix position={{ bottom: 20, right: 20 }}>
+        <Transition transition="slide-up" mounted={scroll.y > 0}>
+          {(transitionStyles) => (
+            <Button
+              leftSection={
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m5 12 7-7 7 7" />
+                  <path d="M12 19V5" />
+                </svg>
+              }
+              style={transitionStyles}
+              color="#DC0A2D"
+              onClick={() => scrollTo({ y: 0 })}
+            >
+              Scroll to top
+            </Button>
+          )}
+        </Transition>
+      </Affix>
     </main>
   );
 }
