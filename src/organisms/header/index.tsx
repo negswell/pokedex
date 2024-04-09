@@ -49,8 +49,11 @@ const Header = () => {
         limit={20}
         data={pokemons}
         radius={"lg"}
-        w={"356px"}
+        w={"320px"}
         renderOption={option}
+        comboboxProps={{
+          transitionProps: { transition: "pop", duration: 200 },
+        }}
       />
     </Flex>
   );
